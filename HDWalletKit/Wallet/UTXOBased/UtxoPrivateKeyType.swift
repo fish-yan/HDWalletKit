@@ -24,7 +24,7 @@ public enum UtxoPrivateKeyType {
             case .wifUncompressed:
                 return "^5[HJK][0-9A-Za-z&&[^0OIl]]{49}"
             }
-        case .litecoin:
+        case .litecoin, .litecoinTest:
             switch self {
             case .hex:
                 return "^\\p{XDigit}+$"

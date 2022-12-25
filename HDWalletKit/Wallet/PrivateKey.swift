@@ -92,6 +92,7 @@ public struct PrivateKey {
     public func get() -> String {
         switch self.coin {
         case .bitcoin: fallthrough
+        case .litecoinTest: fallthrough
         case .litecoin: fallthrough
         case .dash: fallthrough
         case .bitcoinCash:
