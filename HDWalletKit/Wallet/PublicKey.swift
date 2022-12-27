@@ -58,6 +58,14 @@ public struct PublicKey {
         let checksum = (prefix + payload).doubleSHA256.prefix(4)
         return Base58.encode(prefix + payload + checksum)
     }
+
+    public func generateBtc49Address() -> String {
+        let prefix = Data([coin.scriptHash])
+        let payload = RIPEMD160.hash(compressedPublicKey.sha256())
+        let payload1 = RIPEMD160.hash(PriOpCode.scriptWPKH(payload).sha256())
+        let checksum = (prefix + payload1).doubleSHA256.prefix(4)
+        return Base58.encode(prefix + payload1 + checksum)
+    }
     
     func generateCashAddress() -> String {
         let prefix = Data([coin.publicKeyHash])
@@ -77,5 +85,41 @@ public struct PublicKey {
     
     public var data: Data {
         return Data(hex: get())
+    }
+}
+
+private class PriOpCode {
+
+    public static let pushData1: UInt8 = 0x4c
+    public static let pushData2: UInt8 = 0x4d
+    public static let pushData4: UInt8 = 0x4e
+
+    public static func push(_ value: Int) -> Data {
+        guard value != 0 else {
+            return Data([0])
+        }
+        guard value <= 16 else {
+            return Data()
+        }
+        return Data([UInt8(value + 0x50)])
+    }
+
+    public static func push(_ data: Data) -> Data {
+        let length = data.count
+        var bytes = Data()
+
+        switch length {
+        case 0x00...0x4b: bytes = Data([UInt8(length)])
+        case 0x4c...0xff: bytes = Data([PriOpCode.pushData1]) + UInt8(length).littleEndian
+        case 0x0100...0xffff: bytes = Data([PriOpCode.pushData2]) + UInt16(length).littleEndian
+        case 0x10000...0xffffffff: bytes = Data([PriOpCode.pushData4]) + UInt32(length).littleEndian
+        default: return data
+        }
+
+        return bytes + data
+    }
+
+    public static func scriptWPKH(_ data: Data, versionByte: Int = 0) -> Data {
+        return PriOpCode.push(versionByte) + PriOpCode.push(data)
     }
 }
