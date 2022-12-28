@@ -89,10 +89,18 @@ public struct PublicKey {
 }
 
 class PriOpCode {
+    public static let p2pkhStart = Data([PriOpCode.dup, PriOpCode.hash160])
+    public static let p2pkhFinish = Data([PriOpCode.equalVerify, PriOpCode.checkSig])
 
     public static let pushData1: UInt8 = 0x4c
     public static let pushData2: UInt8 = 0x4d
     public static let pushData4: UInt8 = 0x4e
+
+    public static let dup: UInt8 = 0x76
+    public static let hash160: UInt8 = 0xA9
+
+    public static let equalVerify: UInt8 = 0x88
+    public static let checkSig: UInt8 = 0xAC
 
     public static func push(_ value: Int) -> Data {
         guard value != 0 else {

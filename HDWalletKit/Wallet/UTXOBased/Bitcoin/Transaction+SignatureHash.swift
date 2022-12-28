@@ -109,4 +109,42 @@ extension Transaction {
         let hash = data.doubleSHA256
         return hash
     }
+
+    public func signatureSegWitHash(for utxo: TransactionOutput, inputIndex: Int, hashType: SighashType) -> Data {
+        // If hashType doesn't have a fork id, use legacy signature hash
+        guard hashType.hasForkId else {
+            return signatureHashLegacy(for: utxo, inputIndex: inputIndex, hashType: hashType)
+        }
+
+        // "txin" ≒ "utxo"
+        // "txin" is an input of this tx
+        // "utxo" is an output of the prev tx
+        // Currently not handling "inputIndex is out of range error" because BitcoinABC implementation is not handling this.
+        let txin = inputs[inputIndex]
+
+        var data = Data()
+        // 1. nVersion (4-byte)
+        data += version
+        // 2. hashPrevouts
+        data += getPrevoutHash(hashType: hashType)
+        // 3. hashSequence
+        data += getSequenceHash(hashType: hashType)
+        // 4. outpoint [of the input txin]
+        data += txin.previousOutput.serialized()
+        // 5. scriptCode [of the input txout]
+        data += PriOpCode.push(PriOpCode.p2pkhStart + PriOpCode.push(txin.previousOutput.hash) + PriOpCode.p2pkhFinish)
+//        data += utxo.scriptCode()
+        // 6. value [of the input txout] (8-byte)
+        data += utxo.value
+        // 7. nSequence [of the input txin] (4-byte)
+        data += txin.sequence
+        // 8. hashOutputs
+        data += getOutputsHash(index: inputIndex, hashType: hashType)
+        // 9. nLocktime (4-byte)
+        data += lockTime
+        // 10. Sighash types [This time input] (4-byte)
+        data += UInt32(hashType)
+        let hash = data.doubleSHA256
+        return hash
+    }
 }
