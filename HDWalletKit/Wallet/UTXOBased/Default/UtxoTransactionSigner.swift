@@ -41,4 +41,33 @@ public struct UtxoTransactionSigner: UtxoTransactionSignerInterface {
         return signingTransaction
         
     }
+
+    public func signSegWit(_ unsignedTransaction: UnsignedTransaction, with key: PrivateKey) throws -> Transaction {
+        // Define Transaction
+        var signingInputs: [TransactionInput]
+        var signingTransaction: Transaction {
+            let tx: Transaction = unsignedTransaction.tx
+            return Transaction(version: tx.version, inputs: signingInputs, outputs: tx.outputs, lockTime: tx.lockTime, segWit: true)
+        }
+        // Sign
+        signingInputs = unsignedTransaction.tx.inputs
+        let hashType = SighashType.hashTypeForCoin(coin: key.coin)
+        for (i, utxo) in unsignedTransaction.utxos.enumerated() {
+            // Sign transaction hash
+            let sighash: Data = signingTransaction.signatureHash(for: utxo.output, inputIndex: i, hashType: hashType)
+            let signature: Data = try ECDSA.sign(sighash, privateKey: key.raw)
+            let txin = signingInputs[i]
+            let pubkey = key.publicKey
+
+            // Create Signature Script
+            let sigWithHashType: Data = signature + UInt8(hashType)
+
+            let unlockingScriptData = PriOpCode.push(PriOpCode.scriptWPKH(pubkey.data))
+
+            // Update TransactionInput
+            signingInputs[i] = TransactionInput(previousOutput: txin.previousOutput, signatureScript: unlockingScriptData, sequence: txin.sequence, witnessData: [sigWithHashType, pubkey.data])
+        }
+        return signingTransaction
+
+    }
 }

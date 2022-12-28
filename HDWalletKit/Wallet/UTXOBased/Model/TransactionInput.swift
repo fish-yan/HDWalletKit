@@ -9,6 +9,7 @@
 import Foundation
 
 public struct TransactionInput {
+    var witnessData = [Data]()
     /// The previous output transaction reference, as an OutPoint structure
     public let previousOutput: TransactionOutPoint
     /// The length of the signature script
@@ -20,10 +21,11 @@ public struct TransactionInput {
     /// Transaction version as defined by the sender. Intended for "replacement" of transactions when information is updated before inclusion into a block.
     public let sequence: UInt32
     
-    public init(previousOutput: TransactionOutPoint, signatureScript: Data, sequence: UInt32) {
+    public init(previousOutput: TransactionOutPoint, signatureScript: Data, sequence: UInt32, witnessData: [Data] = []) {
         self.previousOutput = previousOutput
         self.signatureScript = signatureScript
         self.sequence = sequence
+        self.witnessData = witnessData
     }
     
     public func isCoinbase() -> Bool {

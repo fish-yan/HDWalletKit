@@ -10,6 +10,7 @@ import Foundation
 
 /// tx describes a bitcoin transaction, in reply to getdata
 public struct Transaction {
+    public var segWit: Bool = false
     /// Transaction data format version (note, this is signed)
     public let version: UInt32
     /// If present, always 0001, and indicates the presence of witness data
@@ -39,11 +40,12 @@ public struct Transaction {
         return Data(txHash.reversed()).hex
     }
     
-    public init(version: UInt32, inputs: [TransactionInput], outputs: [TransactionOutput], lockTime: UInt32) {
+    public init(version: UInt32, inputs: [TransactionInput], outputs: [TransactionOutput], lockTime: UInt32, segWit: Bool = false) {
         self.version = version
         self.inputs = inputs
         self.outputs = outputs
         self.lockTime = lockTime
+        self.segWit = segWit
     }
     
     public func serialized() -> Data {
@@ -53,7 +55,19 @@ public struct Transaction {
         data += inputs.flatMap { $0.serialized() }
         data += txOutCount.serialized()
         data += outputs.flatMap { $0.serialized() }
+        if segWit {
+            data += inputs.flatMap { Transaction.serialize(dataList: $0.witnessData) }
+        }
         data += lockTime
+        return data
+    }
+
+    static func serialize(dataList: [Data]) -> Data {
+        var data = Data()
+        data += VarInt(dataList.count).serialized()
+        for witness in dataList {
+            data += VarInt(witness.count).serialized() + witness
+        }
         return data
     }
     

@@ -88,7 +88,7 @@ public struct PublicKey {
     }
 }
 
-private class PriOpCode {
+class PriOpCode {
 
     public static let pushData1: UInt8 = 0x4c
     public static let pushData2: UInt8 = 0x4d
