@@ -58,7 +58,8 @@ public enum Coin {
     public var scriptHash: UInt8 {
         switch self {
         case .bitcoinCash: fallthrough
-        case .litecoin: fallthrough
+        case .litecoin:
+            return 0x32
         case .bitcoin:
             return 0x05
         case .litecoinTest:
