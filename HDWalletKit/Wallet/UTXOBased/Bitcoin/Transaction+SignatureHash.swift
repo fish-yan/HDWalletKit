@@ -110,7 +110,7 @@ extension Transaction {
         return hash
     }
 
-    public func signatureSegWitHash(for utxo: TransactionOutput, inputIndex: Int, hashType: SighashType) -> Data {
+    public func signatureSegWitHash(for utxo: TransactionOutput, inputIndex: Int, hashType: SighashType, hash: Data) -> Data {
         // If hashType doesn't have a fork id, use legacy signature hash
         guard hashType.hasForkId else {
             return signatureHashLegacy(for: utxo, inputIndex: inputIndex, hashType: hashType)
@@ -132,7 +132,7 @@ extension Transaction {
         // 4. outpoint [of the input txin]
         data += txin.previousOutput.serialized()
         // 5. scriptCode [of the input txout]
-        data += PriOpCode.push(PriOpCode.p2pkhStart + PriOpCode.push(txin.previousOutput.hash) + PriOpCode.p2pkhFinish)
+        data += PriOpCode.push(PriOpCode.p2pkhStart + PriOpCode.push(hash) + PriOpCode.p2pkhFinish)
 //        data += utxo.scriptCode()
         // 6. value [of the input txout] (8-byte)
         data += utxo.value

@@ -54,7 +54,8 @@ public struct UtxoTransactionSigner: UtxoTransactionSignerInterface {
         let hashType = SighashType.hashTypeForCoin(coin: key.coin)
         for (i, utxo) in unsignedTransaction.utxos.enumerated() {
             // Sign transaction hash
-            let sighash: Data = signingTransaction.signatureSegWitHash(for: utxo.output, inputIndex: i, hashType: hashType)
+            let keyHash = RIPEMD160.hash(key.publicKey.compressedPublicKey.sha256())
+            let sighash: Data = signingTransaction.signatureSegWitHash(for: utxo.output, inputIndex: i, hashType: hashType, hash: keyHash)
             let signature: Data = try ECDSA.sign(sighash, privateKey: key.raw)
             let txin = signingInputs[i]
             let pubkey = key.publicKey
@@ -62,7 +63,7 @@ public struct UtxoTransactionSigner: UtxoTransactionSignerInterface {
             // Create Signature Script
             let sigWithHashType: Data = signature + UInt8(hashType)
 
-            let unlockingScriptData = PriOpCode.push(PriOpCode.scriptWPKH(pubkey.data))
+            let unlockingScriptData = PriOpCode.push(PriOpCode.scriptWPKH(keyHash))
 
             // Update TransactionInput
             signingInputs[i] = TransactionInput(previousOutput: txin.previousOutput, signatureScript: unlockingScriptData, sequence: txin.sequence, witnessData: [sigWithHashType, pubkey.data])
