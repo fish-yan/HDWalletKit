@@ -33,13 +33,17 @@ public struct Transaction {
     public let lockTime: UInt32
     
     public var txHash: Data {
-        return serialized().doubleSHA256
+        if segWit {
+            return serializedSegWit().doubleSHA256
+        } else {
+            return serialized().doubleSHA256
+        }
     }
     
     public var txID: String {
         return Data(txHash.reversed()).hex
     }
-    
+
     public init(version: UInt32, inputs: [TransactionInput], outputs: [TransactionOutput], lockTime: UInt32, segWit: Bool = false) {
         self.version = version
         self.inputs = inputs
@@ -61,13 +65,23 @@ public struct Transaction {
         data += outputs.flatMap {
             return $0.serialized()
         }
-        print(data.hex)
         if segWit {
             data += inputs.flatMap { Transaction.serialize(dataList: $0.witnessData) }
         }
-        print(data.hex)
         data += lockTime
-        print(data.hex)
+        return data
+    }
+
+    public func serializedSegWit() -> Data {
+        var data = Data()
+        data += version
+        data += txInCount.serialized()
+        data += inputs.flatMap { $0.serialized() }
+        data += txOutCount.serialized()
+        data += outputs.flatMap {
+            return $0.serialized()
+        }
+        data += lockTime
         return data
     }
 

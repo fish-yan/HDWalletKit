@@ -57,6 +57,8 @@ final public class UTXOWallet {
         let unsignedTx = try self.utxoTransactionBuilder.buildSegWit(destinations: destinations, utxos: utxosToSpend)
         let signedTx = try self.utoxTransactionSigner.signSegWit(unsignedTx, with: self.privateKey)
         self.txID = signedTx.txID
+        print(signedTx.txHash.hex)
+        print(signedTx.txID)
         return signedTx.serialized().hex
     }
 }
