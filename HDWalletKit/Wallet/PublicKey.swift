@@ -51,6 +51,15 @@ public struct PublicKey {
             fatalError("Coin does not support UTXO address")
         }
     }
+
+    public var utxoSegWitAddress: Address {
+        switch coin {
+        case .bitcoin, .litecoin, .litecoinTest, .dash, .bitcoinCash, .dogecoin:
+            return try! LegacyAddress(generateBtc49Address(), coin: coin)
+        case .ethereum:
+            fatalError("Coin does not support UTXO address")
+        }
+    }
     
     func generateBtcAddress() -> String {
         let prefix = Data([coin.publicKeyHash])

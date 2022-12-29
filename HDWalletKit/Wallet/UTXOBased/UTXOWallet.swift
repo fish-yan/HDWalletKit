@@ -53,8 +53,8 @@ final public class UTXOWallet {
         let (utxosToSpend, fee) = try self.utxoSelector.select(from: utxos, targetValue: amount)
         let totalAmount: UInt64 = utxosToSpend.sum()
         let change: UInt64 = totalAmount - amount - fee
-        let destinations: [(Address, UInt64)] = [(toAddress, amount), (privateKey.publicKey.utxoAddress, change)]
-        let unsignedTx = try self.utxoTransactionBuilder.build(destinations: destinations, utxos: utxosToSpend)
+        let destinations: [(Address, UInt64)] = [(toAddress, amount), (privateKey.publicKey.utxoSegWitAddress, change)]
+        let unsignedTx = try self.utxoTransactionBuilder.buildSegWit(destinations: destinations, utxos: utxosToSpend)
         let signedTx = try self.utoxTransactionSigner.signSegWit(unsignedTx, with: self.privateKey)
         self.txID = signedTx.txID
         return signedTx.serialized().hex

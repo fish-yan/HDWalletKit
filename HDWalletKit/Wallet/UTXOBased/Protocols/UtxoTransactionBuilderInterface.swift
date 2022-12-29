@@ -10,4 +10,5 @@ import Foundation
 
 public protocol UtxoTransactionBuilderInterface {
     func build(destinations: [(address: Address, amount: UInt64)], utxos: [UnspentTransaction]) throws -> UnsignedTransaction
+    func buildSegWit(destinations: [(address: Address, amount: UInt64)], utxos: [UnspentTransaction]) throws -> UnsignedTransaction
 }

@@ -51,14 +51,23 @@ public struct Transaction {
     public func serialized() -> Data {
         var data = Data()
         data += version
+        if segWit {
+            data += UInt8(0)       // marker 0x00
+            data += UInt8(1)       // flag 0x01
+        }
         data += txInCount.serialized()
         data += inputs.flatMap { $0.serialized() }
         data += txOutCount.serialized()
-        data += outputs.flatMap { $0.serialized() }
+        data += outputs.flatMap {
+            return $0.serialized()
+        }
+        print(data.hex)
         if segWit {
             data += inputs.flatMap { Transaction.serialize(dataList: $0.witnessData) }
         }
+        print(data.hex)
         data += lockTime
+        print(data.hex)
         return data
     }
 

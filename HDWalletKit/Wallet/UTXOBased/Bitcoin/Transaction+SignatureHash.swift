@@ -111,10 +111,6 @@ extension Transaction {
     }
 
     public func signatureSegWitHash(for utxo: TransactionOutput, inputIndex: Int, hashType: SighashType, hash: Data) -> Data {
-        // If hashType doesn't have a fork id, use legacy signature hash
-        guard hashType.hasForkId else {
-            return signatureHashLegacy(for: utxo, inputIndex: inputIndex, hashType: hashType)
-        }
 
         // "txin" ≒ "utxo"
         // "txin" is an input of this tx
