@@ -17,7 +17,7 @@ public class UtxoSelector: UtxoSelectorInterface {
         self.dustThreshhold = dustThreshhold
     }
     
-    public func select(from utxos: [UnspentTransaction], targetValue: UInt64) throws -> (utxos: [UnspentTransaction], fee: UInt64) {
+    public func select(from utxos: [UnspentTransaction], targetValue: UInt64, segWit: Bool) throws -> (utxos: [UnspentTransaction], fee: UInt64) {
         // if target value is zero, fee is zero
         guard targetValue > 0 else {
             return ([], 0)
@@ -28,7 +28,7 @@ public class UtxoSelector: UtxoSelectorInterface {
         var numOutputs = 2 // if allow multiple output, it will be changed.
         var numInputs = 2
         var fee: UInt64 {
-            return calculateFee(nIn: numInputs, nOut: numOutputs)
+            return calculateFee(nIn: numInputs, nOut: numOutputs, segWit: segWit)
         }
         var targetWithFee: UInt64 {
             return targetValue + fee
@@ -82,9 +82,10 @@ public class UtxoSelector: UtxoSelectorInterface {
         throw UtxoSelectError.insufficientFunds
     }
     
-    private func calculateFee(nIn: Int, nOut: Int = 2) -> UInt64 {
+    private func calculateFee(nIn: Int, nOut: Int = 2, segWit: Bool) -> UInt64 {
+        let mIn = segWit ? 108 : 148
         var txsize: Int {
-            return ((148 * nIn) + (34 * nOut) + 10)
+            return ((mIn * nIn) + (34 * nOut) + 10)
         }
         return UInt64(txsize) * feePerByte
     }
@@ -106,7 +107,7 @@ private extension Array {
     }
 }
 
-internal extension Sequence where Element == UnspentTransaction {
+public extension Sequence where Element == UnspentTransaction {
     func sum() -> UInt64 {
         return reduce(UInt64()) { $0 + $1.output.value }
     }

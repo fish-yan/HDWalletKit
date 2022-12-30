@@ -9,5 +9,5 @@
 import Foundation
 
 public protocol UtxoSelectorInterface {
-    func select(from utxos: [UnspentTransaction], targetValue: UInt64) throws -> (utxos: [UnspentTransaction], fee: UInt64)
+    func select(from utxos: [UnspentTransaction], targetValue: UInt64, segWit: Bool) throws -> (utxos: [UnspentTransaction], fee: UInt64)
 }
