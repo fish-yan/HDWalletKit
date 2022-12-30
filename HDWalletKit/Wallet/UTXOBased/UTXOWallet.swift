@@ -47,7 +47,7 @@ final public class UTXOWallet {
         let change: UInt64 = totalAmount - amount - fee
         var destinations: [(Address, UInt64)] = [(toAddress, amount)]
         if change >= UTXOWallet.dustThreshhold { // 找零太小就不找零
-            destinations.append((privateKey.publicKey.utxoSegWitAddress, change))
+            destinations.append((privateKey.publicKey.utxoAddress, change))
         }
         let unsignedTx = try self.utxoTransactionBuilder.build(destinations: destinations, utxos: utxosToSpend)
         let signedTx = try self.utoxTransactionSigner.sign(unsignedTx, with: self.privateKey)
