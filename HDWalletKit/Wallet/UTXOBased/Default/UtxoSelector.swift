@@ -12,7 +12,7 @@ public class UtxoSelector: UtxoSelectorInterface {
     public let feePerByte: UInt64
     public let dustThreshhold: UInt64
     
-    public init(feePerByte: UInt64 = 1, dustThreshhold: UInt64 = 3 * 182) {
+    public init(feePerByte: UInt64 = 2, dustThreshhold: UInt64 = 100000) {
         self.feePerByte = feePerByte
         self.dustThreshhold = dustThreshhold
     }
@@ -82,7 +82,7 @@ public class UtxoSelector: UtxoSelectorInterface {
         throw UtxoSelectError.insufficientFunds
     }
     
-    private func calculateFee(nIn: Int, nOut: Int = 2, segWit: Bool) -> UInt64 {
+    public func calculateFee(nIn: Int, nOut: Int = 2, segWit: Bool) -> UInt64 {
         let mIn = segWit ? 108 : 148
         var txsize: Int {
             return ((mIn * nIn) + (34 * nOut) + 10)
@@ -94,6 +94,15 @@ public class UtxoSelector: UtxoSelectorInterface {
 enum UtxoSelectError: Error {
     case insufficientFunds
     case error(String)
+
+    var localizedDescription: String {
+        switch self {
+        case .insufficientFunds:
+            return "insufficientFunds"
+        case .error(let msg):
+            return msg
+        }
+    }
 }
 
 private extension Array {
