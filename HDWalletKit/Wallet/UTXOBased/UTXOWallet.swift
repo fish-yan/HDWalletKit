@@ -41,7 +41,7 @@ final public class UTXOWallet {
         self.utoxTransactionSigner = utoxTransactionSigner
     }
     
-    public func createTransaction(to toAddress: Address, amount: UInt64, utxos: [UnspentTransaction]) throws -> String {
+    public func createTransaction(to toAddress: Address, amount: UInt64, utxos: [UnspentTransaction], feeRate: Int64 = 1) throws -> String {
         let (utxosToSpend, fee) = try self.utxoSelector.select(from: utxos, targetValue: amount, segWit: false)
         let totalAmount: UInt64 = utxosToSpend.sum()
         let change: UInt64 = totalAmount - amount - fee
@@ -52,11 +52,11 @@ final public class UTXOWallet {
         let unsignedTx = try self.utxoTransactionBuilder.build(destinations: destinations, utxos: utxosToSpend)
         let signedTx = try self.utoxTransactionSigner.sign(unsignedTx, with: self.privateKey)
         self.txID = signedTx.txID
-        self.fee = fee
+        self.fee = fee * feeRate
         return signedTx.serialized().hex
     }
 
-    public func createSegWitTransaction(to toAddress: Address, amount: UInt64, utxos: [UnspentTransaction]) throws -> String {
+    public func createSegWitTransaction(to toAddress: Address, amount: UInt64, utxos: [UnspentTransaction], feeRate: Int64 = 1) throws -> String {
         let (utxosToSpend, fee) = try self.utxoSelector.select(from: utxos, targetValue: amount, segWit: true)
         let totalAmount: UInt64 = utxosToSpend.sum()
         let change: UInt64 = totalAmount - amount - fee
@@ -67,7 +67,7 @@ final public class UTXOWallet {
         let unsignedTx = try self.utxoTransactionBuilder.buildSegWit(destinations: destinations, utxos: utxosToSpend)
         let signedTx = try self.utoxTransactionSigner.signSegWit(unsignedTx, with: self.privateKey)
         self.txID = signedTx.txID
-        self.fee = fee
+        self.fee = fee * feeRate
         return signedTx.serialized().hex
     }
 }
