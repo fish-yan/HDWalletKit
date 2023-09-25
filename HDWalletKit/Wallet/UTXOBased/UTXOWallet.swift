@@ -12,8 +12,6 @@ final public class UTXOWallet {
     public let privateKey: PrivateKey
     public var txID: String = ""
     public var fee: UInt64 = 0
-
-    private static let dustThreshhold: UInt64 = 100000
     
     public let utxoSelector: UtxoSelectorInterface
     private let utxoTransactionBuilder: UtxoTransactionBuilderInterface
@@ -23,7 +21,7 @@ final public class UTXOWallet {
         switch privateKey.coin {
         case .bitcoin, .litecoin, .litecoinTest, .dash, .bitcoinCash:
             self.init(privateKey: privateKey,
-                      utxoSelector: UtxoSelector(dustThreshhold: UTXOWallet.dustThreshhold),
+                      utxoSelector: UtxoSelector(dustThreshhold: privateKey.coin.dust),
                       utxoTransactionBuilder: UtxoTransactionBuilder(),
                       utoxTransactionSigner: UtxoTransactionSigner())
         default:
@@ -41,13 +39,14 @@ final public class UTXOWallet {
         self.utoxTransactionSigner = utoxTransactionSigner
     }
     
-    public func createTransaction(to toAddress: Address, amount: UInt64, utxos: [UnspentTransaction], feeRate: UInt64 = 1) throws -> String {
+    public func createTransaction(to toAddress: Address, changeAddress: Address? = nil, amount: UInt64, utxos: [UnspentTransaction], feeRate: UInt64 = 1) throws -> String {
         let (utxosToSpend, fee) = try self.utxoSelector.select(from: utxos, targetValue: amount, segWit: false)
         let totalAmount: UInt64 = utxosToSpend.sum()
         let change: UInt64 = totalAmount - amount - fee
         var destinations: [(Address, UInt64)] = [(toAddress, amount)]
-        if change >= UTXOWallet.dustThreshhold { // 找零太小就不找零
-            destinations.append((privateKey.publicKey.utxoAddress, change))
+        if change >= privateKey.coin.dust { // 找零太小就不找零
+            let address = changeAddress ?? privateKey.publicKey.utxoAddress
+            destinations.append((address, change))
         }
         let unsignedTx = try self.utxoTransactionBuilder.build(destinations: destinations, utxos: utxosToSpend)
         let signedTx = try self.utoxTransactionSigner.sign(unsignedTx, with: self.privateKey)
@@ -56,13 +55,14 @@ final public class UTXOWallet {
         return signedTx.serialized().hex
     }
 
-    public func createSegWitTransaction(to toAddress: Address, amount: UInt64, utxos: [UnspentTransaction], feeRate: UInt64 = 1) throws -> String {
+    public func createSegWitTransaction(to toAddress: Address, changeAddress: Address? = nil, amount: UInt64, utxos: [UnspentTransaction], feeRate: UInt64 = 1) throws -> String {
         let (utxosToSpend, fee) = try self.utxoSelector.select(from: utxos, targetValue: amount, segWit: true)
         let totalAmount: UInt64 = utxosToSpend.sum()
         let change: UInt64 = totalAmount - amount - fee
         var destinations: [(Address, UInt64)] = [(toAddress, amount)]
-        if change >= UTXOWallet.dustThreshhold { // 找零太小就不找零
-            destinations.append((privateKey.publicKey.utxoSegWitAddress, change))
+        if change >= privateKey.coin.dust { // 找零太小就不找零
+            let address = changeAddress ?? privateKey.publicKey.utxoSegWitAddress
+            destinations.append((address, change))
         }
         let unsignedTx = try self.utxoTransactionBuilder.buildSegWit(destinations: destinations, utxos: utxosToSpend)
         let signedTx = try self.utoxTransactionSigner.signSegWit(unsignedTx, with: self.privateKey)

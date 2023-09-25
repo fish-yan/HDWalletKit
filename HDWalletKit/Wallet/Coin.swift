@@ -142,4 +142,12 @@ public enum Coin {
         default: return ""
         }
     }
+    
+    public var dust: UInt64 {
+        switch self {
+        case .bitcoin: 564
+        case .litecoin: 100000
+        default: 0
+        }
+    }
 }
