@@ -7,7 +7,6 @@
 //
 
 import CryptoSwift
-import Foundation
 
 public final class Crypto {
    public static func HMACSHA512(key: Data, data: Data) -> Data {
